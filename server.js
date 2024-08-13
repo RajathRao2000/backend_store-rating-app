@@ -4,10 +4,11 @@ import dotenv from "dotenv";
 import roles from "./utils/roles.js";
 import googleAuthURIs from "./utils/googleAuthURIs.js";
 import axios from "axios";
-
+import cors from "cors";
 dotenv.config();
 
 const app = express();
+app.use(cors());
 app.use(express.json());
 
 const port = process.env.PORT || 3000;
@@ -19,27 +20,25 @@ const SIGNUP_URL = `${googleAuthURIs.SignUpUrl}${googleApiKey}`;
 const password_reset_url = `${googleAuthURIs.ChangePassword}${googleApiKey}`;
 
 let client;
-
+let db;
 async function connectToDatabase() {
   if (!client) {
     client = new MongoClient(uri);
     await client.connect();
+    db = client.db("StoresRatingApp");
   }
   return client;
 }
-
+connectToDatabase();
 app.get("/data-stats", async (req, res) => {
   try {
     const client = await connectToDatabase();
-    const database = client.db("StoresRatingApp");
 
-    const usersCount = await database.collection("users").countDocuments();
-    const storesCount = await database
+    const usersCount = await db.collection("users").countDocuments();
+    const storesCount = await db
       .collection("users")
       .countDocuments({ role: roles.STOREOW });
-    const submittedRatings = await database
-      .collection("ratings")
-      .countDocuments();
+    const submittedRatings = await db.collection("ratings").countDocuments();
 
     res.status(200).json({
       message: "success",
@@ -56,9 +55,8 @@ app.get("/data-stats", async (req, res) => {
 app.post("/sign-in", async (req, res) => {
   const { email, password } = req.body;
   try {
-    const client = await connectToDatabase();
-    const database = client.db("StoresRatingApp");
-    const collection = database.collection("users");
+    const db = client.db("StoresRatingApp");
+    const collection = db.collection("users");
 
     const userInfo = await collection.findOne({ email });
 
@@ -85,9 +83,9 @@ app.post("/sign-up", async (req, res) => {
   const body = { ...req.body };
   const { email, password, name, address } = req.body;
   try {
-    const client = await connectToDatabase();
-    const database = client.db("StoresRatingApp");
-    const collection = database.collection("users");
+    const client = await connectTodb();
+    const db = client.db("StoresRatingApp");
+    const collection = db.collection("users");
     const result = await axios.post(SIGNUP_URL, {
       email,
       password,
@@ -114,8 +112,8 @@ app.post("/sign-up", async (req, res) => {
 app.post("/store-list", async (req, res) => {
   const { "arrange-by": arrangeBy, "sort-by": sortBy } = req.body;
   try {
-    const client = await connectToDatabase();
-    const database = client.db("StoresRatingApp");
+    const client = await connectTodb();
+    const db = client.db("StoresRatingApp");
     const collection = database.collection("users");
 
     const query = { role: roles.STOREOW };
@@ -137,9 +135,7 @@ app.post("/store-list", async (req, res) => {
 app.post("/user-list", async (req, res) => {
   const { "arrange-by": arrangeBy, "sort-by": sortBy, role } = req.body;
   try {
-    const client = await connectToDatabase();
-    const database = client.db("StoresRatingApp");
-    const collection = database.collection("users");
+    const collection = db.collection("users");
 
     const query = role && role !== "all" ? { role } : {};
     const sortOrder = sortBy === "ascending" ? 1 : -1;
@@ -184,9 +180,8 @@ app.post("/get-user-rating", async (req, res) => {
   try {
     const { store_name, user_name, name } = req.body;
     console.log(req.body);
-    const client = await connectToDatabase();
-    const database = client.db("StoresRatingApp");
-    const collection = database.collection("ratings");
+
+    const collection = db.collection("ratings");
     let query = { user_name, store_name, name };
     let ratingInfo = await collection.findOne(query);
     console.log("rating", ratingInfo);
@@ -205,9 +200,8 @@ app.post("/get-user-rating", async (req, res) => {
 app.post("/submit-rating", async (req, res) => {
   try {
     const { store_name, user_name, name, rating } = req.body;
-    const client = await connectToDatabase();
-    const database = client.db("StoresRatingApp");
-    const collection = database.collection("ratings");
+
+    const collection = db.collection("ratings");
     let query = { user_name, store_name, name };
     let ratingInfo = await collection.findOne(query);
     let result;
@@ -236,7 +230,7 @@ app.post("/submit-rating", async (req, res) => {
       ])
       .toArray();
     const overall_rating = calculateAverage[0].averageRating;
-    const updateAverage = await database
+    const updateAverage = await db
       .collection("users")
       .updateOne({ store_name, name }, { $set: { overall_rating } });
     res.status(200).json({ message: "success", result });
@@ -253,12 +247,10 @@ app.post("/submit-rating", async (req, res) => {
 
 app.post("/store-stats", async (req, res) => {
   try {
-    const client = await connectToDatabase();
-    const database = client.db("StoresRatingApp");
-    const collection = database.collection("users");
+    const collection = db.collection("users");
     const query = { email: req.body.email };
     const user = await collection.findOne(query);
-    const listofusers = await database
+    const listofusers = await db
       .collection("ratings")
       .find({ name: req.body.name })
       .toArray();
