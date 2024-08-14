@@ -32,8 +32,6 @@ async function connectToDatabase() {
 connectToDatabase();
 app.get("/data-stats", async (req, res) => {
   try {
-    const client = await connectToDatabase();
-
     const usersCount = await db.collection("users").countDocuments();
     const storesCount = await db
       .collection("users")
@@ -55,7 +53,6 @@ app.get("/data-stats", async (req, res) => {
 app.post("/sign-in", async (req, res) => {
   const { email, password } = req.body;
   try {
-    const db = client.db("StoresRatingApp");
     const collection = db.collection("users");
 
     const userInfo = await collection.findOne({ email });
@@ -83,8 +80,6 @@ app.post("/sign-up", async (req, res) => {
   const body = { ...req.body };
   const { email, password, name, address } = req.body;
   try {
-    const client = await connectTodb();
-    const db = client.db("StoresRatingApp");
     const collection = db.collection("users");
     const result = await axios.post(SIGNUP_URL, {
       email,
@@ -112,9 +107,7 @@ app.post("/sign-up", async (req, res) => {
 app.post("/store-list", async (req, res) => {
   const { "arrange-by": arrangeBy, "sort-by": sortBy } = req.body;
   try {
-    const client = await connectTodb();
-    const db = client.db("StoresRatingApp");
-    const collection = database.collection("users");
+    const collection = db.collection("users");
 
     const query = { role: roles.STOREOW };
     const sortOrder = sortBy === "ascending" ? 1 : -1;
@@ -136,7 +129,6 @@ app.post("/user-list", async (req, res) => {
   const { "arrange-by": arrangeBy, "sort-by": sortBy, role } = req.body;
   try {
     const collection = db.collection("users");
-
     const query = role && role !== "all" ? { role } : {};
     const sortOrder = sortBy === "ascending" ? 1 : -1;
     const dblist = await collection
