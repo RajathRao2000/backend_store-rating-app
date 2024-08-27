@@ -45,7 +45,7 @@ app.get("/data-stats", async (req, res) => {
   } catch (error) {
     console.error("Error in counts:", error.message || error);
     res
-      .status(500)
+      .status(200)
       .json({ message: "error", data: error.message || "An error occurred" });
   }
 });
@@ -53,8 +53,8 @@ app.get("/data-stats", async (req, res) => {
 app.post("/sign-in", async (req, res) => {
   const { email, password } = req.body;
   try {
-    const collection = db.collection("users");
-
+    const collection = await db.collection("users");
+    console.log("collection", collection);
     const userInfo = await collection.findOne({ email });
 
     const result = await axios.post(SIGNINURL, {
@@ -68,10 +68,13 @@ app.post("/sign-in", async (req, res) => {
       userData: userInfo,
     });
   } catch (error) {
-    console.error("Error in backend sign-in API:", error.message || error);
-    res.status(500).json({
+    console.error("Error in backend sign-in API:", error);
+    res.status(200).json({
       message: "error",
-      data: error.response?.data?.error?.message || "An error occurred",
+      data:
+        error.response?.data?.error?.message ||
+        error.message ||
+        "An error occurred",
     });
   }
 });
@@ -97,7 +100,7 @@ app.post("/sign-up", async (req, res) => {
     }
   } catch (error) {
     console.error("Error in backend sign-up API:", error.message || error);
-    res.status(500).json({
+    res.status(200).json({
       message: "error",
       data: error.response?.data?.error?.message || "An error occurred",
     });
@@ -120,7 +123,7 @@ app.post("/store-list", async (req, res) => {
   } catch (error) {
     console.error("Error in backend get stores:", error.message || error);
     res
-      .status(500)
+      .status(200)
       .json({ message: "error", data: error.message || "An error occurred" });
   }
 });
@@ -143,7 +146,7 @@ app.post("/user-list", async (req, res) => {
       error.message || error
     );
     res
-      .status(500)
+      .status(200)
       .json({ message: "error", data: error.message || "An error occurred" });
   }
 });
@@ -163,7 +166,7 @@ app.post("/reset-password", async (req, res) => {
       error.message || error
     );
     res
-      .status(500)
+      .status(200)
       .json({ message: "error", data: error.message || "An error occurred" });
   }
 });
@@ -184,7 +187,7 @@ app.post("/get-user-rating", async (req, res) => {
       error.message || error
     );
     res
-      .status(500)
+      .status(200)
       .json({ message: "error", data: error.message || "An error occurred" });
   }
 });
@@ -232,7 +235,7 @@ app.post("/submit-rating", async (req, res) => {
       error.message || error
     );
     res
-      .status(500)
+      .status(200)
       .json({ message: "error", data: error.message || "An error occurred" });
   }
 });
@@ -254,7 +257,7 @@ app.post("/store-stats", async (req, res) => {
   } catch (error) {
     console.error("Error in backend store-stats API:", error.message || error);
     res
-      .status(500)
+      .status(200)
       .json({ message: "error", data: error.message || "An error occurred" });
   }
 });
