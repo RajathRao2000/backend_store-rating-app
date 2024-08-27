@@ -83,7 +83,7 @@ app.post("/sign-up", async (req, res) => {
   const body = { ...req.body };
   const { email, password, name, address } = req.body;
   try {
-    const collection = db.collection("users");
+    const collection = await db.collection("users");
     const result = await axios.post(SIGNUP_URL, {
       email,
       password,
@@ -110,7 +110,7 @@ app.post("/sign-up", async (req, res) => {
 app.post("/store-list", async (req, res) => {
   const { "arrange-by": arrangeBy, "sort-by": sortBy } = req.body;
   try {
-    const collection = db.collection("users");
+    const collection = await db.collection("users");
 
     const query = { role: roles.STOREOW };
     const sortOrder = sortBy === "ascending" ? 1 : -1;
@@ -131,7 +131,7 @@ app.post("/store-list", async (req, res) => {
 app.post("/user-list", async (req, res) => {
   const { "arrange-by": arrangeBy, "sort-by": sortBy, role } = req.body;
   try {
-    const collection = db.collection("users");
+    const collection = await db.collection("users");
     const query = role && role !== "all" ? { role } : {};
     const sortOrder = sortBy === "ascending" ? 1 : -1;
     const dblist = await collection
@@ -176,7 +176,7 @@ app.post("/get-user-rating", async (req, res) => {
     const { store_name, user_name, name } = req.body;
     console.log(req.body);
 
-    const collection = db.collection("ratings");
+    const collection = await db.collection("ratings");
     let query = { user_name, store_name, name };
     let ratingInfo = await collection.findOne(query);
     console.log("rating", ratingInfo);
@@ -196,7 +196,7 @@ app.post("/submit-rating", async (req, res) => {
   try {
     const { store_name, user_name, name, rating } = req.body;
 
-    const collection = db.collection("ratings");
+    const collection = await db.collection("ratings");
     let query = { user_name, store_name, name };
     let ratingInfo = await collection.findOne(query);
     let result;
@@ -242,7 +242,7 @@ app.post("/submit-rating", async (req, res) => {
 
 app.post("/store-stats", async (req, res) => {
   try {
-    const collection = db.collection("users");
+    const collection = await db.collection("users");
     const query = { email: req.body.email };
     const user = await collection.findOne(query);
     const listofusers = await db
